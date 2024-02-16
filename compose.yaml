@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  sender:
+    build: ./java-sender
+    ports:
+      - "8081:${SENDER_PORT}"
+    hostname: ${SENDER_HOST}
+    environment:
+      - RABBIT_PORT=${RABBIT_PORT}
+      - RABBIT_HOST=${RABBIT_HOST}
+      - RECEIVER_HOST=${RECEIVER_HOST}
+      - RECEIVER_PORT=${RECEIVER_PORT}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  receiver:
+    build: ./java-receiver
+    ports:
+      - "8082:${RECEIVER_PORT}"
+    hostname: ${RECEIVER_HOST}
+    environment:
+      - RABBIT_PORT=${RABBIT_PORT}
+      - RABBIT_HOST=${RABBIT_HOST}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  rabbitmq:
+    image: "rabbitmq:latest"
+    ports:
+      - "${RABBIT_PORT}:${RABBIT_PORT}"
+    hostname: ${RABBIT_HOST}
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 15s
+      timeout: 10s
+      retries: 3
